@@ -70,26 +70,24 @@ namespace ClearMessageOutlookAddIn
             dynamic sampleObject = (dynamic)this.OutlookItem;
             try
             {
-                if (sampleObject.MessageClass != null)
+                if (sampleObject.MessageClass == "IPM.Contact")
                 {
-                    if (sampleObject.MessageClass == "IPM.Contact")
+                    Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
+                    if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
                     {
-                        Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
-                        if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
-                        {
-                            contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
-                            contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
-                            contactItem.Subject = contactItem.LastNameAndFirstName;
-                            contactItem.Save();
-                        }
+                        contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
+                        contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
+                        contactItem.Subject = contactItem.LastNameAndFirstName;
+                        contactItem.Save();
                     }
                 }
             }
             catch (Exception ex)
             { }
-            finally {
+            finally
+            {
             }
         }
-        
+
     }
 }
