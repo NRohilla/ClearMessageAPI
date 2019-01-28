@@ -1,0 +1,17 @@
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\ClearMessageOutlookAddIn.dll
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\ClearMessageOutlookAddIn.pdb
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\ClearMessageOutlookAddIn.dll.manifest
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\ClearMessageOutlookAddIn.vsto
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\Microsoft.Office.Tools.Common.v4.0.Utilities.dll
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.ClearMessage.resources
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.Properties.Resources.resources
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csproj.GenerateResource.cache
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csproj.CoreCompileInputs.cache
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csproj.CopyComplete
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.dll
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.pdb
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csprojAssemblyReference.cache
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\Newtonsoft.Json.dll
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\Newtonsoft.Json.pdb
+E:\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\Newtonsoft.Json.xml
