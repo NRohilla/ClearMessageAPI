@@ -19,6 +19,8 @@ namespace ClearMessageOutlookAddIn
     {
         Outlook.Inspectors inspectors;
         ApiHelper apiHelper = new ApiHelper();
+        Microsoft.Office.Interop.Outlook.FormRegion _formRegion;
+
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -31,11 +33,11 @@ namespace ClearMessageOutlookAddIn
             if (Enum.TryParse("Tls12", out flag))
                 ServicePointManager.SecurityProtocol |= flag;
 
-
+            //_formRegion = new Microsoft.Office.Interop.Outlook.FormRegion();
             inspectors = this.Application.Inspectors;
             inspectors.NewInspector +=
             new Microsoft.Office.Interop.Outlook.InspectorsEvents_NewInspectorEventHandler(Inspectors_NewInspector);
-            this.Application.ItemSend +=new Microsoft.Office.Interop.Outlook.ApplicationEvents_11_ItemSendEventHandler(Application_ItemSend);
+            this.Application.ItemSend += new Microsoft.Office.Interop.Outlook.ApplicationEvents_11_ItemSendEventHandler(Application_ItemSend);
         }
 
         public void Inspectors_NewInspector(Microsoft.Office.Interop.Outlook.Inspector Inspector)
@@ -74,7 +76,7 @@ namespace ClearMessageOutlookAddIn
 
         private void Application_ItemSend(object Item, ref bool Cancel)
         {
-            testSendClearMessageEmailAsync();
+            //testSendClearMessageEmailAsync();
             if (Item is Outlook.MailItem)
             {
                 /*temp variable just to check email exists in contact - will remove it later*/
@@ -171,25 +173,7 @@ namespace ClearMessageOutlookAddIn
 
             }
 
-            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"tarunarora@virtualemployee.com\"        }      ],      \"subject\": \"Sending with SendGrid is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"and easy to do anywhere, even with Python\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \".jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
-
-            ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
-
-            HttpClient client = apiHelper.InitializeClient();
-            using (var content = new StringContent(mailJson, System.Text.Encoding.Default, "application/json"))
-            {
-                using (HttpResponseMessage response = await client.PostAsync("v1/mail/send", content))
-                {
-                    string responseData = await response.Content.ReadAsStringAsync();
-                }
-            }
-
-        }
-
-
-        private async Task testSendClearMessageEmailAsync()
-        {
-            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"tarunarora@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
+            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"rspandey@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
 
             ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
 
@@ -212,6 +196,33 @@ namespace ClearMessageOutlookAddIn
             }
 
         }
+
+
+        //private async Task SendClearMessageEmailAsync()
+        //{
+        //    string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"rspandey@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
+
+        //    ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
+
+        //    string mailObjectJson = JsonConvert.SerializeObject(mailJson);
+
+        //    try
+        //    {
+        //        HttpClient client = apiHelper.InitializeClient();
+        //        using (var content = new StringContent(mailJson, System.Text.Encoding.Default, "application/json"))
+        //        {
+        //            using (HttpResponseMessage response = await client.PostAsync("v1/mail/send", content))
+        //            {
+        //                string responseData = await response.Content.ReadAsStringAsync();
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //    }
+
+        //}
 
         //private void EnumerateAddressLists()
         //{

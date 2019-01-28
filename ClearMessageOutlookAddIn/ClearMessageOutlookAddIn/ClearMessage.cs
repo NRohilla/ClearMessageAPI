@@ -1,7 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Office = Microsoft.Office.Core;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
@@ -9,6 +13,8 @@ namespace ClearMessageOutlookAddIn
 {
     partial class ClearMessage
     {
+        ApiHelper apiHelper = new ApiHelper();
+
         #region Form Region Factory 
 
 
@@ -73,12 +79,34 @@ namespace ClearMessageOutlookAddIn
                 if (sampleObject.MessageClass == "IPM.Contact")
                 {
                     Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
-                    if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
+
+                    if (!string.IsNullOrEmpty(contactItem.MobileTelephoneNumber))
                     {
-                        contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
-                        contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
-                        contactItem.Subject = contactItem.LastNameAndFirstName;
-                        contactItem.Save();
+                        if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
+                        {
+                            contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
+                            contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
+                            contactItem.Subject = contactItem.LastNameAndFirstName;
+                            contactItem.Save();
+                        }
+
+                        if (chkSendViaClearMessage.Checked)
+                        {
+                            RegisterModel registerModel = new RegisterModel();
+
+                            registerModel.email = contactItem.Email1Address;
+                            registerModel.phone = contactItem.MobileTelephoneNumber;
+
+                            string jsonRegisterModel = JsonConvert.SerializeObject(registerModel);
+                            SendRegisterationMail(jsonRegisterModel);
+                        }
+                    }
+                    else
+                    {
+                        if (MessageBox.Show("Please enter the mobile telephone number.", "Error", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
+                        {
+                            
+                        }
                     }
                 }
             }
@@ -86,6 +114,18 @@ namespace ClearMessageOutlookAddIn
             { }
             finally
             {
+            }
+        }
+
+        private async Task SendRegisterationMail(string registerModel)
+        {
+            HttpClient client = apiHelper.InitializeClient();
+            using (var content = new StringContent(registerModel, System.Text.Encoding.Default, "application/json"))
+            {
+                using (HttpResponseMessage response = await client.PostAsync("v1/admin/receiver", content))
+                {
+                    string responseData = await response.Content.ReadAsStringAsync();
+                }
             }
         }
 
