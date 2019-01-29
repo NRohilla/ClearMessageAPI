@@ -80,7 +80,7 @@ namespace ClearMessageOutlookAddIn
                 {
                     Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
 
-                    if (!string.IsNullOrEmpty(contactItem.MobileTelephoneNumber))
+                    if (chkSendViaClearMessage.Checked)
                     {
                         if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
                         {
@@ -90,7 +90,7 @@ namespace ClearMessageOutlookAddIn
                             contactItem.Save();
                         }
 
-                        if (chkSendViaClearMessage.Checked)
+                        if (!string.IsNullOrEmpty(contactItem.MobileTelephoneNumber))
                         {
                             RegisterModel registerModel = new RegisterModel();
 
@@ -100,12 +100,9 @@ namespace ClearMessageOutlookAddIn
                             string jsonRegisterModel = JsonConvert.SerializeObject(registerModel);
                             SendRegisterationMail(jsonRegisterModel);
                         }
-                    }
-                    else
-                    {
-                        if (MessageBox.Show("Please enter the mobile telephone number.", "Error", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
+                        else 
                         {
-                            
+                            MessageBox.Show("Please enter the mobile number otherwise contact will not get registered on Clear Message portal.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
                     }
                 }

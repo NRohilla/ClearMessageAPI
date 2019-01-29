@@ -19,7 +19,14 @@ namespace ClearMessageOutlookAddIn
     {
         Outlook.Inspectors inspectors;
         ApiHelper apiHelper = new ApiHelper();
-        Microsoft.Office.Interop.Outlook.FormRegion _formRegion;
+
+
+        ClearMailModel clearMailModel;
+        Personalizations personalizations;
+        To to;
+        From from;
+        Content content;
+        Attachments attachments;
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -79,8 +86,8 @@ namespace ClearMessageOutlookAddIn
             //testSendClearMessageEmailAsync();
             if (Item is Outlook.MailItem)
             {
-                /*temp variable just to check email exists in contact - will remove it later*/
-                bool hasEmail = false;
+                /*Initializing the clear message email model objects*/
+                InitializeMailObjects();
 
                 Outlook.MailItem mail = (Outlook.MailItem)Item;
                 Outlook.Folder contacts = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
@@ -97,13 +104,13 @@ namespace ClearMessageOutlookAddIn
                     foreach (var toEmail in toEmailAddressList)
                     {
                         //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
-                        CheckRecipientsInContactsAsync(toEmail, contacts, mail);
+                        CheckRecipientsInContactsAsync(toEmail.Trim(), contacts, mail);
                     }
                 }
                 else
                 {
                     //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
-                    CheckRecipientsInContactsAsync(mail.To, contacts, mail);
+                    CheckRecipientsInContactsAsync(mail.To.Trim(), contacts, mail);
                 }
                 #endregion
 
@@ -120,13 +127,13 @@ namespace ClearMessageOutlookAddIn
                         foreach (var ccEmail in ccEmailAddressList)
                         {
                             //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
-                            CheckRecipientsInContactsAsync(ccEmail, contacts, mail);
+                            CheckRecipientsInContactsAsync(ccEmail.Trim(), contacts, mail);
                         }
                     }
                     else
                     {
                         //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
-                        CheckRecipientsInContactsAsync(mail.CC, contacts, mail);
+                        CheckRecipientsInContactsAsync(mail.CC.Trim(), contacts, mail);
                     }
                 }
 
@@ -142,8 +149,21 @@ namespace ClearMessageOutlookAddIn
             //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
             foreach (Outlook.ContactItem contactItem in contacts.Items)
             {
+                string Email1DisplayName = string.Empty;
+                string Email2DisplayName = string.Empty;
+                string Email3DisplayName = string.Empty;
+
+                if(!string.IsNullOrEmpty(contactItem.Email1DisplayName))
+                    Email1DisplayName = contactItem.Email1DisplayName.Contains("(") ? contactItem.Email1DisplayName.Remove(contactItem.Email1DisplayName.IndexOf("("), (contactItem.Email1DisplayName.Length - contactItem.Email1DisplayName.IndexOf("("))).Trim() : contactItem.Email1DisplayName;
+
+                if (!string.IsNullOrEmpty(contactItem.Email2DisplayName))
+                    Email2DisplayName = contactItem.Email2DisplayName.Contains("(") ? contactItem.Email2DisplayName.Remove(contactItem.Email2DisplayName.IndexOf("("), (contactItem.Email2DisplayName.Length - contactItem.Email2DisplayName.IndexOf("("))).Trim() : contactItem.Email2DisplayName;
+
+                if (!string.IsNullOrEmpty(contactItem.Email3DisplayName))
+                    Email3DisplayName = contactItem.Email3DisplayName.Contains("(") ? contactItem.Email3DisplayName.Remove(contactItem.Email3DisplayName.IndexOf("("), (contactItem.Email3DisplayName.Length - contactItem.Email3DisplayName.IndexOf("("))).Trim() : contactItem.Email3DisplayName;
+                
                 //Check the toEmail matches the contact's email and display name
-                if (emailAddress == contactItem.Email1DisplayName || emailAddress == contactItem.Email2DisplayName || emailAddress == contactItem.Email3DisplayName)
+                if (emailAddress == Email1DisplayName || emailAddress == Email2DisplayName || emailAddress == Email3DisplayName)
                 {
                     //Check the user defined property "SendViaClearMessage" exists for the contact
                     var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
@@ -160,20 +180,17 @@ namespace ClearMessageOutlookAddIn
             }
         }
 
+        private void PerpareClearMessageModel(Outlook.MailItem mail)
+        {
+            
+        }
+
         private async Task SendClearMessageEmailAsync(Outlook.MailItem mail, Outlook.ContactItem contact)
         {
             //Logic for sending the emails with attachments count.
             int attachmentCount = mail.Attachments.Count;
-            decimal splitEmails;
 
-            decimal.TryParse(Convert.ToString(attachmentCount / 10), out splitEmails);
-
-            if (attachmentCount > 0 && attachmentCount <= 10)
-            {
-
-            }
-
-            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"rspandey@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
+            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"gulrezansari@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
 
             ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
 
@@ -195,6 +212,19 @@ namespace ClearMessageOutlookAddIn
 
             }
 
+        }
+
+        private void InitializeMailObjects()
+        {
+            clearMailModel = new ClearMailModel();
+            clearMailModel.personalizations = new List<Personalizations>();
+            clearMailModel.from = new From();
+            clearMailModel.content = new List<Content>();
+            clearMailModel.attachments = new List<Attachments>();
+
+
+            personalizations.to = new List<To>();
+            attachments = new Attachments();
         }
 
 
