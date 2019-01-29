@@ -116,26 +116,26 @@ namespace ClearMessageOutlookAddIn
 
                 #region Logic for CC recipents
 
-                if (!string.IsNullOrWhiteSpace(mail.CC))
-                {
-                    if (mail.CC.Contains(';'))
-                    {
-                        //Splitting the CC email addresses for checking whether it exists in the contacts
-                        string[] ccEmailAddressList = mail.CC.Split(';');
+                //if (!string.IsNullOrWhiteSpace(mail.CC))
+                //{
+                //    if (mail.CC.Contains(';'))
+                //    {
+                //        //Splitting the CC email addresses for checking whether it exists in the contacts
+                //        string[] ccEmailAddressList = mail.CC.Split(';');
 
-                        //Loop over all the "CC:" email addresses entered in the recipients
-                        foreach (var ccEmail in ccEmailAddressList)
-                        {
-                            //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
-                            CheckRecipientsInContactsAsync(ccEmail.Trim(), contacts, mail);
-                        }
-                    }
-                    else
-                    {
-                        //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
-                        CheckRecipientsInContactsAsync(mail.CC.Trim(), contacts, mail);
-                    }
-                }
+                //        //Loop over all the "CC:" email addresses entered in the recipients
+                //        foreach (var ccEmail in ccEmailAddressList)
+                //        {
+                //            //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
+                //            CheckRecipientsInContactsAsync(ccEmail.Trim(), contacts, mail);
+                //        }
+                //    }
+                //    else
+                //    {
+                //        //Loop till the ccEmail found in the contacts list - once contact found loop will break and run for another recipient
+                //        CheckRecipientsInContactsAsync(mail.CC.Trim(), contacts, mail);
+                //    }
+                //}
 
                 #endregion
 
@@ -149,21 +149,21 @@ namespace ClearMessageOutlookAddIn
             //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
             foreach (Outlook.ContactItem contactItem in contacts.Items)
             {
-                string Email1DisplayName = string.Empty;
-                string Email2DisplayName = string.Empty;
-                string Email3DisplayName = string.Empty;
+                //string Email1DisplayName = string.Empty;
+                //string Email2DisplayName = string.Empty;
+                //string Email3DisplayName = string.Empty;
 
-                if(!string.IsNullOrEmpty(contactItem.Email1DisplayName))
-                    Email1DisplayName = contactItem.Email1DisplayName.Contains("(") ? contactItem.Email1DisplayName.Remove(contactItem.Email1DisplayName.IndexOf("("), (contactItem.Email1DisplayName.Length - contactItem.Email1DisplayName.IndexOf("("))).Trim() : contactItem.Email1DisplayName;
+                //if(!string.IsNullOrEmpty(contactItem.Email1DisplayName))
+                //    Email1DisplayName = contactItem.Email1DisplayName.Contains("(") ? contactItem.Email1DisplayName.Remove(contactItem.Email1DisplayName.IndexOf("("), (contactItem.Email1DisplayName.Length - contactItem.Email1DisplayName.IndexOf("("))).Trim() : contactItem.Email1DisplayName;
 
-                if (!string.IsNullOrEmpty(contactItem.Email2DisplayName))
-                    Email2DisplayName = contactItem.Email2DisplayName.Contains("(") ? contactItem.Email2DisplayName.Remove(contactItem.Email2DisplayName.IndexOf("("), (contactItem.Email2DisplayName.Length - contactItem.Email2DisplayName.IndexOf("("))).Trim() : contactItem.Email2DisplayName;
+                //if (!string.IsNullOrEmpty(contactItem.Email2DisplayName))
+                //    Email2DisplayName = contactItem.Email2DisplayName.Contains("(") ? contactItem.Email2DisplayName.Remove(contactItem.Email2DisplayName.IndexOf("("), (contactItem.Email2DisplayName.Length - contactItem.Email2DisplayName.IndexOf("("))).Trim() : contactItem.Email2DisplayName;
 
-                if (!string.IsNullOrEmpty(contactItem.Email3DisplayName))
-                    Email3DisplayName = contactItem.Email3DisplayName.Contains("(") ? contactItem.Email3DisplayName.Remove(contactItem.Email3DisplayName.IndexOf("("), (contactItem.Email3DisplayName.Length - contactItem.Email3DisplayName.IndexOf("("))).Trim() : contactItem.Email3DisplayName;
-                
+                //if (!string.IsNullOrEmpty(contactItem.Email3DisplayName))
+                //    Email3DisplayName = contactItem.Email3DisplayName.Contains("(") ? contactItem.Email3DisplayName.Remove(contactItem.Email3DisplayName.IndexOf("("), (contactItem.Email3DisplayName.Length - contactItem.Email3DisplayName.IndexOf("("))).Trim() : contactItem.Email3DisplayName;
+
                 //Check the toEmail matches the contact's email and display name
-                if (emailAddress == Email1DisplayName || emailAddress == Email2DisplayName || emailAddress == Email3DisplayName)
+                if (emailAddress == contactItem.Email1DisplayName || emailAddress == contactItem.Email2DisplayName || emailAddress == contactItem.Email3DisplayName)
                 {
                     //Check the user defined property "SendViaClearMessage" exists for the contact
                     var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
@@ -172,7 +172,8 @@ namespace ClearMessageOutlookAddIn
                         if (contactItem.UserProperties["SendViaClearMessage"].Value)
                         {
                             //Logic for calling the Clear Message API method for sending emails
-                            await SendClearMessageEmailAsync(mail, contactItem);
+                            //await SendClearMessageEmailAsync(mail, contactItem);
+                            PerpareClearMessageModel(emailAddress, mail);
                         }
                     }
                     break;
@@ -180,9 +181,42 @@ namespace ClearMessageOutlookAddIn
             }
         }
 
-        private void PerpareClearMessageModel(Outlook.MailItem mail)
+        private void PerpareClearMessageModel(string emailAddress, Outlook.MailItem mail)
         {
-            
+            //clearMailModel = new ClearMailModel();
+            //clearMailModel.personalizations = new List<Personalizations>();
+            //clearMailModel.from = new From();
+            //clearMailModel.content = new List<Content>();
+            //clearMailModel.attachments = new List<Attachments>();
+
+
+            //personalizations.to = new List<To>();
+            //attachments = new Attachments();
+
+            personalizations.to.Add(new To() { email = emailAddress });
+            personalizations.subject = mail.Subject;
+
+            clearMailModel.personalizations.Add(personalizations);
+            clearMailModel.content.Add(new Content() { type = "text/plain", value = mail.Body });
+
+            if (!clearMailModel.attachments.Any())
+            {
+                foreach (Outlook.Attachment attachment in mail.Attachments)
+                {
+                    string attachmentPath = attachment.PathName;
+
+                    byte[] fileInBytes = System.IO.File.ReadAllBytes(attachmentPath);
+
+                    string fileInBase64String = Convert.ToBase64String(fileInBytes, 0, fileInBytes.Length);
+
+                    dynamic attachmentObj = JsonConvert.SerializeObject(attachment);
+                    //clearMailModel.attachments.Add(new Attachments() {content= });
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(clearMailModel.from.email))
+                clearMailModel.from.email = mail.SendUsingAccount.SmtpAddress;
+
         }
 
         private async Task SendClearMessageEmailAsync(Outlook.MailItem mail, Outlook.ContactItem contact)
@@ -222,11 +256,31 @@ namespace ClearMessageOutlookAddIn
             clearMailModel.content = new List<Content>();
             clearMailModel.attachments = new List<Attachments>();
 
-
+            personalizations = new Personalizations();
             personalizations.to = new List<To>();
             attachments = new Attachments();
         }
 
+        private string GetSenderEmailAddress(Outlook.MailItem mail)
+        {
+            Outlook.AddressEntry sender = mail.Sender;
+            string SenderEmailAddress = "";
+
+            if (sender.AddressEntryUserType == Outlook.OlAddressEntryUserType.olExchangeUserAddressEntry || sender.AddressEntryUserType == Outlook.OlAddressEntryUserType.olExchangeRemoteUserAddressEntry)
+            {
+                Outlook.ExchangeUser exchUser = sender.GetExchangeUser();
+                if (exchUser != null)
+                {
+                    SenderEmailAddress = exchUser.PrimarySmtpAddress;
+                }
+            }
+            else
+            {
+                SenderEmailAddress = mail.SenderEmailAddress;
+            }
+
+            return SenderEmailAddress;
+        }
 
         //private async Task SendClearMessageEmailAsync()
         //{
