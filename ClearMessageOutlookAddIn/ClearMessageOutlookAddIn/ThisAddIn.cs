@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Net;
+using System.Windows.Forms;
+using System.IO;
 
 namespace ClearMessageOutlookAddIn
 {
@@ -20,13 +22,11 @@ namespace ClearMessageOutlookAddIn
         Outlook.Inspectors inspectors;
         ApiHelper apiHelper = new ApiHelper();
 
-
         ClearMailModel clearMailModel;
         Personalizations personalizations;
-        To to;
-        From from;
-        Content content;
         Attachments attachments;
+        List<Attachments> attachmentList = new List<Attachments>();
+        List<TempAttachments> tempAttachmentList = new List<TempAttachments>();
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -40,7 +40,6 @@ namespace ClearMessageOutlookAddIn
             if (Enum.TryParse("Tls12", out flag))
                 ServicePointManager.SecurityProtocol |= flag;
 
-            //_formRegion = new Microsoft.Office.Interop.Outlook.FormRegion();
             inspectors = this.Application.Inspectors;
             inspectors.NewInspector +=
             new Microsoft.Office.Interop.Outlook.InspectorsEvents_NewInspectorEventHandler(Inspectors_NewInspector);
@@ -49,16 +48,6 @@ namespace ClearMessageOutlookAddIn
 
         public void Inspectors_NewInspector(Microsoft.Office.Interop.Outlook.Inspector Inspector)
         {
-            //Outlook.Folder folder = Application.ActiveExplorer().CurrentFolder as Outlook.Folder;
-            //Outlook.ContactItem contactItem = folder.Items.Add("IPM.Contact") as Outlook.ContactItem;
-
-            //// Add UserProperty to contactItem
-            //contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
-            //contactItem.UserProperties["SendViaClearMessage"].Value = true;
-            //contactItem.Subject = "UserProperty Example";
-            //contactItem.Save();
-
-
             try
             {
                 Outlook.MailItem mailItem = Inspector.CurrentItem as Outlook.MailItem;
@@ -71,13 +60,65 @@ namespace ClearMessageOutlookAddIn
                     }
                 }
 
+                //Calling the event before Attachment is fully added to the mail item
+                mailItem.BeforeAttachmentAdd += MailItem_BeforeAttachmentAdd;
+                mailItem.AttachmentRemove += MailItem_AttachmentRemove;
+
                 bool itemSend = false;
                 if (!string.IsNullOrWhiteSpace(mailItem.EntryID))
                     Application_ItemSend(mailItem, ref itemSend);
             }
             catch (Exception e)
             {
+                //MessageBox.Show(e.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
+        private void MailItem_BeforeAttachmentAdd(Outlook.Attachment Attachment, ref bool Cancel)
+        {
+            string filePath = Attachment.GetTemporaryFilePath();
+
+            byte[] fileInBytes = System.IO.File.ReadAllBytes(filePath);
+
+            string fileContent = Convert.ToBase64String(fileInBytes, 0, fileInBytes.Length);
+            Attachment.DisplayName = Attachment.DisplayName + Attachment.Index.ToString();
+            attachmentList.Add(new Attachments()
+            {
+                filename = Attachment.FileName,
+                content = fileContent,
+                type = Path.GetExtension(filePath),
+                disposition = "attachment"
+            });
+
+            tempAttachmentList.Add(new TempAttachments()
+            {
+                displayName = Attachment.DisplayName,
+                filename = Attachment.FileName,
+                content = fileContent,
+                type = Path.GetExtension(filePath),
+                disposition = "attachment"
+            });
+        }
+
+        private void MailItem_AttachmentRemove(Outlook.Attachment Attachment)
+        {
+            if (attachmentList.Count > 0)
+            {
+                var attachment = (from file in tempAttachmentList
+                                  where file.displayName == Attachment.DisplayName
+                                  select file).FirstOrDefault();
+
+                tempAttachmentList.Remove(attachment);
+
+                attachmentList.Clear();
+
+                //attachmentList.Add(new Attachments()
+                //{
+                //    filename = Attachment.FileName,
+                //    content = fileContent,
+                //    type = Path.GetExtension(filePath),
+                //    disposition = "attachment"
+                //});
             }
         }
 
@@ -91,9 +132,9 @@ namespace ClearMessageOutlookAddIn
 
                 Outlook.MailItem mail = (Outlook.MailItem)Item;
                 Outlook.Folder contacts = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
+                string toEmailDisplayName = string.Empty;
 
-                #region Logic for TO recipents
-
+                #region Logic for TO recipients
 
                 if (mail.To.Contains(';'))
                 {
@@ -103,18 +144,24 @@ namespace ClearMessageOutlookAddIn
                     //Loop over all the "TO:" email addresses entered in the recipients
                     foreach (var toEmail in toEmailAddressList)
                     {
+                        //Removing the email address from the Display name so that it should always match with the contact
+                        toEmailDisplayName = toEmail.Contains("(") ? toEmail.Remove(toEmail.IndexOf("("), (toEmail.Length - toEmail.IndexOf("("))).Trim() : toEmail.Trim();
+
                         //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
-                        CheckRecipientsInContactsAsync(toEmail.Trim(), contacts, mail);
+                        CheckRecipientsInContactsAsync(toEmailDisplayName, contacts, mail);
                     }
                 }
                 else
                 {
+                    //Removing the email address from the Display name so that it should always match with the contact
+                    toEmailDisplayName = mail.To.Contains("(") ? mail.To.Remove(mail.To.IndexOf("("), (mail.To.Length - mail.To.IndexOf("("))).Trim() : mail.To.Trim();
+
                     //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
-                    CheckRecipientsInContactsAsync(mail.To.Trim(), contacts, mail);
+                    CheckRecipientsInContactsAsync(toEmailDisplayName, contacts, mail);
                 }
                 #endregion
 
-                #region Logic for CC recipents
+                #region Logic for CC recipients
 
                 //if (!string.IsNullOrWhiteSpace(mail.CC))
                 //{
@@ -139,8 +186,8 @@ namespace ClearMessageOutlookAddIn
 
                 #endregion
 
-                mail.BodyFormat = Microsoft.Office.Interop.Outlook.OlBodyFormat.olFormatHTML;
-                //mail.Send();
+                //Call for the Clear Message API method for sending emails
+                SendClearMessageEmailAsync();
             }
         }
 
@@ -149,31 +196,39 @@ namespace ClearMessageOutlookAddIn
             //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
             foreach (Outlook.ContactItem contactItem in contacts.Items)
             {
-                //string Email1DisplayName = string.Empty;
-                //string Email2DisplayName = string.Empty;
-                //string Email3DisplayName = string.Empty;
+                #region Logic for removing the email address from the contactItem so that it matches parameter emailAddress
 
-                //if(!string.IsNullOrEmpty(contactItem.Email1DisplayName))
-                //    Email1DisplayName = contactItem.Email1DisplayName.Contains("(") ? contactItem.Email1DisplayName.Remove(contactItem.Email1DisplayName.IndexOf("("), (contactItem.Email1DisplayName.Length - contactItem.Email1DisplayName.IndexOf("("))).Trim() : contactItem.Email1DisplayName;
+                string Email1DisplayName = string.Empty;
+                string Email2DisplayName = string.Empty;
+                string Email3DisplayName = string.Empty;
 
-                //if (!string.IsNullOrEmpty(contactItem.Email2DisplayName))
-                //    Email2DisplayName = contactItem.Email2DisplayName.Contains("(") ? contactItem.Email2DisplayName.Remove(contactItem.Email2DisplayName.IndexOf("("), (contactItem.Email2DisplayName.Length - contactItem.Email2DisplayName.IndexOf("("))).Trim() : contactItem.Email2DisplayName;
+                if (!string.IsNullOrEmpty(contactItem.Email1DisplayName))
+                    Email1DisplayName = contactItem.Email1DisplayName.Contains("(") ? contactItem.Email1DisplayName.Remove(contactItem.Email1DisplayName.IndexOf("("), (contactItem.Email1DisplayName.Length - contactItem.Email1DisplayName.IndexOf("("))).Trim() : contactItem.Email1DisplayName;
 
-                //if (!string.IsNullOrEmpty(contactItem.Email3DisplayName))
-                //    Email3DisplayName = contactItem.Email3DisplayName.Contains("(") ? contactItem.Email3DisplayName.Remove(contactItem.Email3DisplayName.IndexOf("("), (contactItem.Email3DisplayName.Length - contactItem.Email3DisplayName.IndexOf("("))).Trim() : contactItem.Email3DisplayName;
+                if (!string.IsNullOrEmpty(contactItem.Email2DisplayName))
+                    Email2DisplayName = contactItem.Email2DisplayName.Contains("(") ? contactItem.Email2DisplayName.Remove(contactItem.Email2DisplayName.IndexOf("("), (contactItem.Email2DisplayName.Length - contactItem.Email2DisplayName.IndexOf("("))).Trim() : contactItem.Email2DisplayName;
+
+                if (!string.IsNullOrEmpty(contactItem.Email3DisplayName))
+                    Email3DisplayName = contactItem.Email3DisplayName.Contains("(") ? contactItem.Email3DisplayName.Remove(contactItem.Email3DisplayName.IndexOf("("), (contactItem.Email3DisplayName.Length - contactItem.Email3DisplayName.IndexOf("("))).Trim() : contactItem.Email3DisplayName;
+
+                #endregion
 
                 //Check the toEmail matches the contact's email and display name
-                if (emailAddress == contactItem.Email1DisplayName || emailAddress == contactItem.Email2DisplayName || emailAddress == contactItem.Email3DisplayName)
+                if (emailAddress == Email1DisplayName || emailAddress == Email2DisplayName || emailAddress == Email3DisplayName)
                 {
+                    //getting the email address from the contact instead of displayName
+                    string contactEmailAddress = string.Empty;
+                    //if (contactItem.Email1AddressType)
+                    contactEmailAddress = !string.IsNullOrWhiteSpace(contactItem.Email1Address.Trim()) ? contactItem.Email1Address.Trim() : !string.IsNullOrWhiteSpace(contactItem.Email2Address.Trim()) ? contactItem.Email2Address.Trim() : !string.IsNullOrWhiteSpace(contactItem.Email3Address.Trim()) ? contactItem.Email3Address.Trim() : contactItem.Email3Address.Trim();
+
                     //Check the user defined property "SendViaClearMessage" exists for the contact
                     var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
                     if (CustomProperty != null)
                     {
                         if (contactItem.UserProperties["SendViaClearMessage"].Value)
                         {
-                            //Logic for calling the Clear Message API method for sending emails
-                            //await SendClearMessageEmailAsync(mail, contactItem);
-                            PerpareClearMessageModel(emailAddress, mail);
+                            //The call for the adding the clear message object once found checked
+                            PerpareClearMessageModel(contactEmailAddress, mail);
                         }
                     }
                     break;
@@ -183,57 +238,37 @@ namespace ClearMessageOutlookAddIn
 
         private void PerpareClearMessageModel(string emailAddress, Outlook.MailItem mail)
         {
-            //clearMailModel = new ClearMailModel();
-            //clearMailModel.personalizations = new List<Personalizations>();
-            //clearMailModel.from = new From();
-            //clearMailModel.content = new List<Content>();
-            //clearMailModel.attachments = new List<Attachments>();
-
-
-            //personalizations.to = new List<To>();
-            //attachments = new Attachments();
-
+            //Setting the personalization class object
             personalizations.to.Add(new To() { email = emailAddress });
             personalizations.subject = mail.Subject;
 
+            //Adding the personalization object to the list of Persaonalizations
             clearMailModel.personalizations.Add(personalizations);
+
+            //Adding the list of Content class object 
             clearMailModel.content.Add(new Content() { type = "text/plain", value = mail.Body });
 
+            //Assigning the list of Attachents to the ClearMailModel.Attachment object
             if (!clearMailModel.attachments.Any())
-            {
-                foreach (Outlook.Attachment attachment in mail.Attachments)
-                {
-                    string attachmentPath = attachment.PathName;
+                clearMailModel.attachments = attachmentList;
 
-                    byte[] fileInBytes = System.IO.File.ReadAllBytes(attachmentPath);
-
-                    string fileInBase64String = Convert.ToBase64String(fileInBytes, 0, fileInBytes.Length);
-
-                    dynamic attachmentObj = JsonConvert.SerializeObject(attachment);
-                    //clearMailModel.attachments.Add(new Attachments() {content= });
-                }
-            }
-
+            // The propetry set for the FROM email address
             if (string.IsNullOrWhiteSpace(clearMailModel.from.email))
                 clearMailModel.from.email = mail.SendUsingAccount.SmtpAddress;
-
         }
 
-        private async Task SendClearMessageEmailAsync(Outlook.MailItem mail, Outlook.ContactItem contact)
+        private async Task SendClearMessageEmailAsync()
         {
-            //Logic for sending the emails with attachments count.
-            int attachmentCount = mail.Attachments.Count;
+            //string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"gulrezansari@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
 
-            string mailJson = "{  \"personalizations\": [    {      \"to\": [        {          \"email\": \"gulrezansari@virtualemployee.com\"        }      ],      \"subject\": \"Sending with outlook addin is Fun\"    }  ],  \"from\": {    \"email\": \"gulrezansari@virtualemployee.com\"  },  \"content\": [    {      \"type\": \"text/plain\",      \"value\": \"This email has been sent via outlook plugin and clear message api\"    }  ],\"attachments\":[{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"},{\"content\": \"filedata\",\"type\": \"jpeg\", \"filename\": \"testfile\", \"disposition\": \"attachment\"}]}";
+            //ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
 
-            ClearMailModel mailObject = JsonConvert.DeserializeObject<ClearMailModel>(mailJson);
-
-            string mailObjectJson = JsonConvert.SerializeObject(mailJson);
+            string mailObjectJson = JsonConvert.SerializeObject(clearMailModel);
 
             try
             {
                 HttpClient client = apiHelper.InitializeClient();
-                using (var content = new StringContent(mailJson, System.Text.Encoding.Default, "application/json"))
+                using (var content = new StringContent(mailObjectJson, System.Text.Encoding.Default, "application/json"))
                 {
                     using (HttpResponseMessage response = await client.PostAsync("v1/mail/send", content))
                     {
@@ -245,7 +280,6 @@ namespace ClearMessageOutlookAddIn
             {
 
             }
-
         }
 
         private void InitializeMailObjects()

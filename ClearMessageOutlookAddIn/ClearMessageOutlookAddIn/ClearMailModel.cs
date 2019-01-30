@@ -43,4 +43,13 @@ namespace ClearMessageOutlookAddIn
         public string filename { get; set; }
         public string disposition { get; set; }
     }
+
+    public class TempAttachments
+    {
+        public string displayName { get; set; }
+        public string content { get; set; }
+        public string type { get; set; }
+        public string filename { get; set; }
+        public string disposition { get; set; }
+    }
 }

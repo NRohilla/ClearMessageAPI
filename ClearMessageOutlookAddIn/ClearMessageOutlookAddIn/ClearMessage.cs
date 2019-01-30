@@ -100,9 +100,20 @@ namespace ClearMessageOutlookAddIn
                             string jsonRegisterModel = JsonConvert.SerializeObject(registerModel);
                             SendRegisterationMail(jsonRegisterModel);
                         }
-                        else 
+                        else
                         {
                             MessageBox.Show("Please enter the mobile number otherwise contact will not get registered on Clear Message portal.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
+                        {
+                            var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
+                            if (CustomProperty != null)
+                            {
+                                contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
+                            }
                         }
                     }
                 }
