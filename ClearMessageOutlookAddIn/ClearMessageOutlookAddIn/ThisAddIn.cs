@@ -135,6 +135,16 @@ namespace ClearMessageOutlookAddIn
                 string toEmailDisplayName = string.Empty;
 
                 #region Logic for TO recipients
+                
+                List<string> smptEmailAddressList = new List<string>();
+
+                foreach (Outlook.Recipient recipient in mail.Recipients)
+                {
+                    dynamic address = recipient.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
+
+                    smptEmailAddressList.Add(address.ToString().Trim());
+                }
+
 
                 if (mail.To.Contains(';'))
                 {
@@ -142,8 +152,25 @@ namespace ClearMessageOutlookAddIn
                     string[] toEmailAddressList = mail.To.Split(';');
 
                     //Loop over all the "TO:" email addresses entered in the recipients
-                    foreach (var toEmail in toEmailAddressList)
+                    foreach (Outlook.Recipient recipient in mail.Recipients)
                     {
+                        dynamic toEmail = recipient.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
+
+                        string emailToFind = string.Empty;
+
+                        foreach (string email in toEmailAddressList)
+                        {
+                            emailToFind = email.Contains("(") ? email.Remove(email.IndexOf("("), (email.Length - email.IndexOf("("))).Trim() : email.Trim();
+                        }
+
+
+                        var foundEmail = Array.FindAll(toEmailAddressList, s => s.Equals(toEmail.ToString().Trim())).First();
+
+                        if (!string.IsNullOrWhiteSpace(foundEmail))
+                        {
+
+                        }
+
                         //Removing the email address from the Display name so that it should always match with the contact
                         toEmailDisplayName = toEmail.Contains("(") ? toEmail.Remove(toEmail.IndexOf("("), (toEmail.Length - toEmail.IndexOf("("))).Trim() : toEmail.Trim();
 

@@ -87,7 +87,6 @@ namespace ClearMessageOutlookAddIn
                             contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
                             contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
                             contactItem.Subject = contactItem.LastNameAndFirstName;
-                            contactItem.Save();
                         }
 
                         if (!string.IsNullOrEmpty(contactItem.MobileTelephoneNumber))
@@ -116,14 +115,35 @@ namespace ClearMessageOutlookAddIn
                             }
                         }
                     }
+
+                    
+
+                    if (!string.IsNullOrWhiteSpace(contactItem.Email1Address))
+                        contactItem.Email1DisplayName = contactItem.Email1AddressType == "SMTP" ? contactItem.Email1Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
+                    if (!string.IsNullOrWhiteSpace(contactItem.Email2Address))
+                        contactItem.Email2DisplayName = contactItem.Email1AddressType == "SMTP" ? contactItem.Email2Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
+                    if (!string.IsNullOrWhiteSpace(contactItem.Email3Address))
+                        contactItem.Email3DisplayName = contactItem.Email3AddressType == "SMTP" ? contactItem.Email3Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
+                    contactItem.Save();
                 }
             }
             catch (Exception ex)
             { }
             finally
-            {
-            }
+            { }
         }
+
+        private string GetSmtpEmaillAddress(Outlook.ContactItem contactItem)
+        {
+            dynamic contactProp = contactItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/id/{00062004-0000-0000-C000-000000000046}/8084001F");
+
+            return contactProp.ToString().Trim();
+        }
+
+       
 
         private async Task SendRegisterationMail(string registerModel)
         {
