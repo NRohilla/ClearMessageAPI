@@ -28,13 +28,7 @@ namespace ClearMessageOutlookAddIn
             // Use e.OutlookItem to get a reference to the current Outlook item.
             private void ClearMessageFactory_FormRegionInitializing(object sender, Microsoft.Office.Tools.Outlook.FormRegionInitializingEventArgs e)
             {
-                //dynamic sampleObject = (dynamic)e.OutlookItem;
 
-                //if (sampleObject.MessageClass == "IPM.Contact")
-                //    e.Cancel = false;
-
-                //if (sampleObject.MessageClass == "IPM.Note")
-                //    e.Cancel = true;
             }
         }
 
@@ -93,7 +87,15 @@ namespace ClearMessageOutlookAddIn
                         {
                             RegisterModel registerModel = new RegisterModel();
 
-                            registerModel.email = contactItem.Email1Address;
+                            if (!string.IsNullOrWhiteSpace(contactItem.Email1Address))
+                                registerModel.email = contactItem.Email1AddressType == "SMTP" ? contactItem.Email1Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
+                            if (!string.IsNullOrWhiteSpace(contactItem.Email2Address))
+                                registerModel.email = contactItem.Email2AddressType == "SMTP" ? contactItem.Email2Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
+                            if (!string.IsNullOrWhiteSpace(contactItem.Email3Address))
+                                registerModel.email = contactItem.Email3AddressType == "SMTP" ? contactItem.Email3Address.Trim() : GetSmtpEmaillAddress(contactItem);
+
                             registerModel.phone = contactItem.MobileTelephoneNumber;
 
                             string jsonRegisterModel = JsonConvert.SerializeObject(registerModel);
@@ -116,17 +118,6 @@ namespace ClearMessageOutlookAddIn
                         }
                     }
 
-                    
-
-                    if (!string.IsNullOrWhiteSpace(contactItem.Email1Address))
-                        contactItem.Email1DisplayName = contactItem.Email1AddressType == "SMTP" ? contactItem.Email1Address.Trim() : GetSmtpEmaillAddress(contactItem);
-
-                    if (!string.IsNullOrWhiteSpace(contactItem.Email2Address))
-                        contactItem.Email2DisplayName = contactItem.Email1AddressType == "SMTP" ? contactItem.Email2Address.Trim() : GetSmtpEmaillAddress(contactItem);
-
-                    if (!string.IsNullOrWhiteSpace(contactItem.Email3Address))
-                        contactItem.Email3DisplayName = contactItem.Email3AddressType == "SMTP" ? contactItem.Email3Address.Trim() : GetSmtpEmaillAddress(contactItem);
-
                     contactItem.Save();
                 }
             }
@@ -143,7 +134,7 @@ namespace ClearMessageOutlookAddIn
             return contactProp.ToString().Trim();
         }
 
-       
+
 
         private async Task SendRegisterationMail(string registerModel)
         {
