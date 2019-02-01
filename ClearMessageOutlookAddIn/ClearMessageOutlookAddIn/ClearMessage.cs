@@ -39,25 +39,27 @@ namespace ClearMessageOutlookAddIn
         // Use this.OutlookFormRegion to get a reference to the form region.
         private void ClearMessage_FormRegionShowing(object sender, System.EventArgs e)
         {
-            dynamic sampleObject = (dynamic)this.OutlookItem;
+            dynamic outlookObject = (dynamic)this.OutlookItem;
 
-            if (sampleObject.MessageClass == "IPM.Contact")
+            //Check the object is of type Contact
+            if (outlookObject.MessageClass == "IPM.Contact")
             {
                 Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
-                if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
+
+                //Getting the custom property defined for the checkbox
+                var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
+                if (CustomProperty != null)
                 {
-                    var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
-                    if (CustomProperty != null)
-                    {
-                        chkSendViaClearMessage.Checked = contactItem.UserProperties["SendViaClearMessage"].Value;
-                    }
-                    else
-                    {
-                        contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
-                        contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
-                        contactItem.Subject = contactItem.LastNameAndFirstName;
-                        contactItem.Save();
-                    }
+                    //Setting the state of the checkbox from the property
+                    chkSendViaClearMessage.Checked = contactItem.UserProperties["SendViaClearMessage"].Value;
+                }
+                else
+                {
+                    //This process will get exceuted if the old contact doesn't have the property.
+                    contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
+                    contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
+                    contactItem.Subject = contactItem.LastNameAndFirstName;
+                    contactItem.Save();
                 }
             }
         }
@@ -67,22 +69,25 @@ namespace ClearMessageOutlookAddIn
         // Use this.OutlookFormRegion to get a reference to the form region.
         private void ClearMessage_FormRegionClosed(object sender, System.EventArgs e)
         {
-            dynamic sampleObject = (dynamic)this.OutlookItem;
+            dynamic outlookObject = (dynamic)this.OutlookItem;
             try
             {
-                if (sampleObject.MessageClass == "IPM.Contact")
+                if (outlookObject.MessageClass == "IPM.Contact")
                 {
                     Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
 
                     if (chkSendViaClearMessage.Checked)
                     {
+                        //Check the below fields are not empty or null
                         if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
                         {
+                            //Create the user defined property for clear message checkbox
                             contactItem.UserProperties.Add("SendViaClearMessage", Outlook.OlUserPropertyType.olYesNo, true, Type.Missing);
                             contactItem.UserProperties["SendViaClearMessage"].Value = chkSendViaClearMessage.Checked;
                             contactItem.Subject = contactItem.LastNameAndFirstName;
                         }
 
+                        //If Checkbox is checked and not the mobile number is null - We will register the user on Clear Message Portal
                         if (!string.IsNullOrEmpty(contactItem.MobileTelephoneNumber))
                         {
                             RegisterModel registerModel = new RegisterModel();
@@ -98,8 +103,11 @@ namespace ClearMessageOutlookAddIn
 
                             registerModel.phone = contactItem.MobileTelephoneNumber;
 
+                            //Serialize the Register model for sending to API
                             string jsonRegisterModel = JsonConvert.SerializeObject(registerModel);
-                            SendRegisterationMail(jsonRegisterModel);
+
+                            //Call for the API endpoint for making a new receiver
+                            RegisterUserOnClearMessage(jsonRegisterModel);
                         }
                         else
                         {
@@ -108,6 +116,7 @@ namespace ClearMessageOutlookAddIn
                     }
                     else
                     {
+                        //If the checkbox is not checked then update the custom property if created.
                         if (!string.IsNullOrWhiteSpace(contactItem.FirstName) && !string.IsNullOrWhiteSpace(contactItem.Email1Address) && !string.IsNullOrWhiteSpace(contactItem.FileAs))
                         {
                             var CustomProperty = contactItem.UserProperties.Find("SendViaClearMessage", true);
@@ -136,7 +145,7 @@ namespace ClearMessageOutlookAddIn
 
 
 
-        private async Task SendRegisterationMail(string registerModel)
+        private async Task RegisterUserOnClearMessage(string registerModel)
         {
             HttpClient client = apiHelper.InitializeClient();
             using (var content = new StringContent(registerModel, System.Text.Encoding.Default, "application/json"))

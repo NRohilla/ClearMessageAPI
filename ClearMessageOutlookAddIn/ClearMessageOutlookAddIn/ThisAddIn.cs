@@ -22,6 +22,14 @@ namespace ClearMessageOutlookAddIn
         Outlook.Inspectors inspectors;
         ApiHelper apiHelper = new ApiHelper();
 
+        Outlook.MailItem olMailItem = null;
+        Outlook.Recipients olRecipients = null;
+        Outlook.Recipient olRecipientTO = null;
+        Outlook.Recipient olRecipientCC = null;
+        Outlook.Recipient olRecipientBCC = null;
+        Outlook.Attachments olAttachments = null;
+        Outlook.Attachment olAttachment = null;
+
         ClearMailModel clearMailModel;
         Personalizations personalizations;
         Attachments attachments;
@@ -44,6 +52,9 @@ namespace ClearMessageOutlookAddIn
             inspectors.NewInspector +=
             new Microsoft.Office.Interop.Outlook.InspectorsEvents_NewInspectorEventHandler(Inspectors_NewInspector);
             this.Application.ItemSend += new Microsoft.Office.Interop.Outlook.ApplicationEvents_11_ItemSendEventHandler(Application_ItemSend);
+
+            olMailItem = Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
+            olAttachments = olMailItem.Attachments;
         }
 
         public void Inspectors_NewInspector(Microsoft.Office.Interop.Outlook.Inspector Inspector)
@@ -66,9 +77,12 @@ namespace ClearMessageOutlookAddIn
                 //Calling the event when attachment is remnoved
                 mailItem.AttachmentRemove += MailItem_AttachmentRemove;
 
-                bool itemSend = false;
+                bool CancelSend = false;
                 if (!string.IsNullOrWhiteSpace(mailItem.EntryID))
-                    Application_ItemSend(mailItem, ref itemSend);
+                {
+                    Application_ItemSend(mailItem, ref CancelSend);
+                }
+
             }
             catch (Exception e)
             {
@@ -76,98 +90,110 @@ namespace ClearMessageOutlookAddIn
             }
         }
 
-        private void MailItem_BeforeAttachmentAdd(Outlook.Attachment Attachment, ref bool Cancel)
-        {
-            //Getting attachment path
-            string filePath = Attachment.GetTemporaryFilePath();
-
-            //Convert to Byte arraty to read file data
-            byte[] fileInBytes = System.IO.File.ReadAllBytes(filePath);
-
-            //File data in Base64 String
-            string fileContent = Convert.ToBase64String(fileInBytes, 0, fileInBytes.Length);
-
-            //Making the display name unqiue  - come in handy when deleting the attachments
-            Attachment.DisplayName = Attachment.DisplayName + Attachment.Index.ToString();
-
-            //Adding the files to the attachment list
-            attachmentList.Add(new Attachments()
-            {
-                filename = Attachment.FileName,
-                content = fileContent,
-                type = Path.GetExtension(filePath),
-                disposition = "attachment"
-            });
-
-            //Replica of Attachments object used when attachment is removed from the list
-            tempAttachmentList.Add(new TempAttachments()
-            {
-                displayName = Attachment.DisplayName,
-                filename = Attachment.FileName,
-                content = fileContent,
-                type = Path.GetExtension(filePath),
-                disposition = "attachment"
-            });
-        }
-
-        private void MailItem_AttachmentRemove(Outlook.Attachment Attachment)
-        {
-            //Finding the attachment if it exist in the list
-            var attachment = (from file in tempAttachmentList
-                              where file.displayName == Attachment.DisplayName
-                              select file).FirstOrDefault();
-
-            //Removing the attachmnet from the Temp list
-            tempAttachmentList.Remove(attachment);
-
-            attachmentList.Clear();
-
-            //Again copying the attachments fromtemp to Original
-            foreach (TempAttachments tempAttachment in tempAttachmentList)
-            {
-                attachmentList.Add(new Attachments()
-                {
-                    content = tempAttachment.content,
-                    filename = tempAttachment.filename,
-                    type = tempAttachment.type,
-                    disposition = tempAttachment.disposition
-                });
-            }
-        }
-
         private void Application_ItemSend(object Item, ref bool Cancel)
         {
             if (Item is Outlook.MailItem)
             {
+                Outlook.MailItem mail = (Outlook.MailItem)Item;
+
+                CreateClearMessageMailItem(mail);
+
+                //Send the outlook normal email message which are not marked with ClearMessage
+                SendOutlookEmails(mail);
+
+                Cancel = true;
+                this.Application.ActiveInspector().Close(Outlook.OlInspectorClose.olDiscard);
+            }
+
+            //if (Item is Outlook.MailItem)
+            //{
+            //    /*Initializing the clear message email model objects*/
+            //    InitializeMailObjects();
+
+            //    Outlook.MailItem mail = (Outlook.MailItem)Item;
+            //    Outlook.Folder contacts = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
+            //    Outlook.Recipients tempRecipients = mail.Recipients;
+
+            //    #region Logic for TO recipients to send ClearMessage API
+
+            //    //Loop over all the "TO:" email addresses entered in the recipients
+            //    foreach (Outlook.Recipient recipient in mail.Recipients)
+            //    {
+            //        //Checking if the recipient is in To address bar
+            //        if (recipient.Type == 1)
+            //        {
+            //            //Converting the exchange email address to SMTP email address
+            //            dynamic toEmail = recipient.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
+
+            //            //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
+            //            CheckRecipientsInContactsAsync(toEmail.ToString().Trim(), contacts, mail);
+            //        }
+            //    }
+
+            //    //Call for the Clear Message API method for sending emails
+            //    SendClearMessageEmailAsync();
+            //    #endregion
+            //}
+        }
+
+        private void CreateClearMessageMailItem(Outlook.MailItem mailObject)
+        {
+            if (mailObject is Outlook.MailItem)
+            {
                 /*Initializing the clear message email model objects*/
                 InitializeMailObjects();
 
-                Outlook.MailItem mail = (Outlook.MailItem)Item;
+                Outlook.MailItem mail = (Outlook.MailItem)mailObject;
                 Outlook.Folder contacts = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
 
-                #region Logic for TO recipients
-
-                //Splitting the TO email addresses for checking whether it exists in the contacts
-                string[] toEmailAddressList = mail.To.Split(';');
+                #region Logic for TO recipients to send ClearMessage API
 
                 //Loop over all the "TO:" email addresses entered in the recipients
                 foreach (Outlook.Recipient recipient in mail.Recipients)
                 {
+                    //Converting the exchange email address to SMTP email address
+                    dynamic toEmail = recipient.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
+
                     //Checking if the recipient is in To address bar
                     if (recipient.Type == 1)
                     {
-                        dynamic toEmail = recipient.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
-
-                        //Removing the email address from the Display name so that it should always match with the contact
-
                         //Loop till the toEmail found in the contacts list - once contact found loop will break and run for another recipient
                         CheckRecipientsInContactsAsync(toEmail.ToString().Trim(), contacts, mail);
+                    }
+                    else
+                    {
+                        if (recipient.Type == 2)
+                        {
+                            olRecipientCC = olRecipients.Add(toEmail.ToString().Trim());
+                            olRecipientCC.Type = 2;
+                        }
+
+                        if (recipient.Type == 3)
+                        {
+                            olRecipientBCC = olRecipients.Add(toEmail.ToString().Trim());
+                            olRecipientBCC.Type = 3;
+                        }
                     }
                 }
 
                 //Call for the Clear Message API method for sending emails
                 SendClearMessageEmailAsync();
+
                 #endregion
+            }
+
+        }
+
+        private void SendOutlookEmails(Outlook.MailItem mailItem)
+        {
+            if (olRecipients.Count > 0)
+            {
+                olMailItem.Subject = mailItem.Subject;
+                olMailItem.Body = mailItem.Body;
+                olMailItem.BodyFormat = mailItem.BodyFormat;
+
+                olMailItem.Save();
+                olMailItem.Send();
             }
         }
 
@@ -208,8 +234,13 @@ namespace ClearMessageOutlookAddIn
                     {
                         if (contactItem.UserProperties["SendViaClearMessage"].Value)
                         {
-                            //The call for the adding the clear message object once found checked
+                            //The call for the adding the clear message object once found true for the property
                             PerpareClearMessageModel(contactEmailAddress, mail);
+                        }
+                        else
+                        {
+                            olRecipientTO = olRecipients.Add(emailAddress);
+                            olRecipientTO.Type = 1;
                         }
                     }
                     break;
@@ -277,6 +308,72 @@ namespace ClearMessageOutlookAddIn
             personalizations = new Personalizations();
             personalizations.to = new List<To>();
             attachments = new Attachments();
+
+            //Initializing the olRecipients which is not marked as Clear Message recipients
+            olRecipients = olMailItem.Recipients;
+        }
+
+        private void MailItem_BeforeAttachmentAdd(Outlook.Attachment Attachment, ref bool Cancel)
+        {
+            //Getting attachment path
+            string filePath = Attachment.GetTemporaryFilePath();
+
+            //Convert to Byte arraty to read file data
+            byte[] fileInBytes = System.IO.File.ReadAllBytes(filePath);
+
+            //File data in Base64 String
+            string fileContent = Convert.ToBase64String(fileInBytes, 0, fileInBytes.Length);
+
+            //Making the display name unqiue  - come in handy when deleting the attachments
+            Attachment.DisplayName = Attachment.DisplayName + Attachment.Index.ToString();
+
+            //Adding the files to the attachment list
+            attachmentList.Add(new Attachments()
+            {
+                filename = Attachment.FileName,
+                content = fileContent,
+                type = Path.GetExtension(filePath),
+                disposition = "attachment"
+            });
+
+            olAttachments.Add(filePath, Microsoft.Office.Interop.Outlook.OlAttachmentType.olByValue, 1, Attachment.DisplayName);
+
+            //Replica of Attachments object used when attachment is removed from the list
+            tempAttachmentList.Add(new TempAttachments()
+            {
+                displayName = Attachment.DisplayName,
+                filename = Attachment.FileName,
+                content = fileContent,
+                type = Path.GetExtension(filePath),
+                disposition = "attachment"
+            });
+        }
+
+        private void MailItem_AttachmentRemove(Outlook.Attachment Attachment)
+        {
+            //Finding the attachment if it exist in the list
+            var attachment = (from file in tempAttachmentList
+                              where file.displayName == Attachment.DisplayName
+                              select file).FirstOrDefault();
+
+            //Removing the attachmnet from the Temp list
+            tempAttachmentList.Remove(attachment);
+
+            olAttachments.Remove(Convert.ToInt16(Attachment.DisplayName.Substring(Attachment.DisplayName.Length-1,1)));
+
+            attachmentList.Clear();
+
+            //Again copying the attachments fromtemp to Original
+            foreach (TempAttachments tempAttachment in tempAttachmentList)
+            {
+                attachmentList.Add(new Attachments()
+                {
+                    content = tempAttachment.content,
+                    filename = tempAttachment.filename,
+                    type = tempAttachment.type,
+                    disposition = tempAttachment.disposition
+                });
+            }
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
