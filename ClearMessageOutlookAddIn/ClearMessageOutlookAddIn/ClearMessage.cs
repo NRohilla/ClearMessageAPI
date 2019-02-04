@@ -143,8 +143,6 @@ namespace ClearMessageOutlookAddIn
             return contactProp.ToString().Trim();
         }
 
-
-
         private async Task RegisterUserOnClearMessage(string registerModel)
         {
             HttpClient client = apiHelper.InitializeClient();
