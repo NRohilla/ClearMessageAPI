@@ -25,7 +25,6 @@ namespace ClearMessageOutlookAddIn
 
         Outlook.MailItem olMailItem = null;
         Outlook.Recipients olRecipients = null;
-        Outlook.Recipients cmRecipients = null;
         Outlook.Recipient olRecipientTO = null;
         Outlook.Recipient cmRecipientTO = null;
         Outlook.Recipient olRecipientCC = null;
@@ -37,6 +36,8 @@ namespace ClearMessageOutlookAddIn
         Attachments attachments;
         List<Attachments> attachmentList = new List<Attachments>();
         List<TempAttachments> tempAttachmentList = new List<TempAttachments>();
+        List<string> cmRecipientsList = new List<string>();
+        string sentEmailEntryID = string.Empty;
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -53,7 +54,20 @@ namespace ClearMessageOutlookAddIn
             inspectors = this.Application.Inspectors;
             inspectors.NewInspector += new Microsoft.Office.Interop.Outlook.InspectorsEvents_NewInspectorEventHandler(Inspectors_NewInspector);
             this.Application.ItemSend += new Microsoft.Office.Interop.Outlook.ApplicationEvents_11_ItemSendEventHandler(Application_ItemSend);
+
+            //Initializing the outlook email object
+            olMailItem = Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
+
+            //((Outlook.ItemEvents_10_Event)olMailItem).Send += ThisAddIn_Send; ;
         }
+
+        //private void ThisAddIn_Send(ref bool Cancel)
+        //{
+        //    if (olMailItem.Sent)
+        //    {
+
+        //    }
+        //}
 
         public void Inspectors_NewInspector(Microsoft.Office.Interop.Outlook.Inspector Inspector)
         {
@@ -69,8 +83,8 @@ namespace ClearMessageOutlookAddIn
                     }
                 }
 
-                //Initializing the outlook email object
-                olMailItem = Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
+                //Initializing the olRecipients which is not marked as Clear Message recipients
+                olRecipients = olMailItem.Recipients;
 
                 //Initializing the outlook email attachments object
                 olAttachments = olMailItem.Attachments;
@@ -114,6 +128,42 @@ namespace ClearMessageOutlookAddIn
 
                 //Closing the new mail window and discarding the composed message.
                 this.Application.ActiveInspector().Close(Outlook.OlInspectorClose.olDiscard);
+
+                /*===============================================================================*/
+                //Outlook.Items sentEmailItems = null;
+                //Outlook.Items sentEmailItems = (Outlook.Items)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderSentMail).Items;
+                //Outlook.Folder sentFolder = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderSentMail);
+
+                //Outlook.NameSpace ns = Application.GetNamespace("MAPI");
+
+                //Outlook.MailItem objMail = ns.GetItemFromID(sentEmailEntryID, sentFolder.StoreID);
+
+                ////sentEmailItems = sentEmailsList.Items;
+
+                //sentEmailItems.Sort("[SentOn]", true);
+
+                //dynamic obj = sentEmailItems.Find(sentEmailEntryID);
+
+                //foreach (dynamic emailItem in sentEmailItems)
+                //{
+                //    if (olMailItem.EntryID != null)
+                //    {
+
+                //    }
+                //}
+
+                //if (cmRecipientsList.Any())
+                //{
+                //    foreach (string cmEmail in cmRecipientsList)
+                //    {
+                //        cmRecipientTO = olRecipients.Add(cmEmail);
+                //        cmRecipientTO.Type = 1;
+                //    }
+                //}
+                /*===============================================================================*/
+
+                Dispose();
+                ResetObjects();
             }
         }
 
@@ -143,14 +193,15 @@ namespace ClearMessageOutlookAddIn
                     }
                     else
                     {
-                        if (recipient.Type == 2)
+                        if (recipient.Type == 2) // For CC
                         {
+                            //Adding the CC recipient to the outlook  olRecipientCC
                             olRecipientCC = olRecipients.Add(toEmail.ToString().Trim());
                             olRecipientCC.Type = 2;
                         }
-
-                        if (recipient.Type == 3)
+                        else //(recipient.Type == 3) //For BCC
                         {
+                            //Adding the BCC recipient to the outlook  olRecipientBCC
                             olRecipientBCC = olRecipients.Add(toEmail.ToString().Trim());
                             olRecipientBCC.Type = 3;
                         }
@@ -173,12 +224,14 @@ namespace ClearMessageOutlookAddIn
                 olMailItem.Body = mailItem.Body;
                 olMailItem.BodyFormat = mailItem.BodyFormat;
 
-                olMailItem.Send();
                 olMailItem.Save();
-            }
 
-            Dispose();
-            ResetObjects();
+                sentEmailEntryID = olMailItem.EntryID;
+
+                olMailItem.Send();
+
+
+            }
         }
 
         private async Task CheckRecipientsInContactsAsync(string emailAddress, Outlook.Folder contacts, Outlook.MailItem mail)
@@ -218,15 +271,15 @@ namespace ClearMessageOutlookAddIn
                     {
                         if (contactItem.UserProperties["SendViaClearMessage"].Value)
                         {
-                            //Adding the Clear Message recipient for saving the email in sent items with all emails
-                            cmRecipientTO = cmRecipients.Add(emailAddress);
-                            cmRecipientTO.Type = 1;
+                            //Adding the Clear Message recipients to the list for saving the email in sent items with all emails
+                            cmRecipientsList.Add(emailAddress);
 
                             //The call for the adding the clear message object once found true for the property
                             PerpareClearMessageModel(contactEmailAddress, mail);
                         }
                         else
                         {
+                            //Else add the recipient to the normal outlook recipient for sending email (w/o clear message)
                             olRecipientTO = olRecipients.Add(emailAddress);
                             olRecipientTO.Type = 1;
                         }
@@ -296,10 +349,6 @@ namespace ClearMessageOutlookAddIn
             personalizations = new Personalizations();
             personalizations.to = new List<To>();
             attachments = new Attachments();
-
-            //Initializing the olRecipients which is not marked as Clear Message recipients
-            olRecipients = olMailItem.Recipients;
-            cmRecipients = olMailItem.Recipients;
         }
 
         private void MailItem_BeforeAttachmentAdd(Outlook.Attachment Attachment, ref bool Cancel)
@@ -453,6 +502,7 @@ namespace ClearMessageOutlookAddIn
             clearMailModel.personalizations.Clear();
             clearMailModel.attachments.Clear();
             clearMailModel.content.Clear();
+            cmRecipientsList.Clear();
 
             //Releasing all the com objects to avoid error for the next email
             if (olMailItem != null)
