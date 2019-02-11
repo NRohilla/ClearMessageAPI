@@ -74,14 +74,14 @@ namespace ClearMessageOutlookAddIn
             try
             {
                 Outlook.MailItem mailItem = Inspector.CurrentItem as Outlook.MailItem;
-                if (mailItem != null)
-                {
-                    if (mailItem.EntryID == null)
-                    {
-                        mailItem.Subject = DateTime.Now.ToString();
-                        mailItem.Body = "This mail was sent using ClearMessage API";
-                    }
-                }
+                //if (mailItem != null)
+                //{
+                //    if (mailItem.EntryID == null)
+                //    {
+                //        mailItem.Subject = DateTime.Now.ToString();
+                //        mailItem.Body = "This mail was sent using ClearMessage API";
+                //    }
+                //}
 
                 //Initializing the olRecipients which is not marked as Clear Message recipients
                 olRecipients = olMailItem.Recipients;
