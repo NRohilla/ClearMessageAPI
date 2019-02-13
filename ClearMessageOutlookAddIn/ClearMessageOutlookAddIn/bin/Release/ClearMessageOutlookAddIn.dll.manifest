@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
-  <asmv1:assemblyIdentity name="ClearMessageOutlookAddIn.dll" version="1.0.0.1" publicKeyToken="3ca411f9c61b01d6" language="neutral" processorArchitecture="msil" type="win32" />
+  <asmv1:assemblyIdentity name="ClearMessageOutlookAddIn.dll" version="1.0.0.3" publicKeyToken="3ca411f9c61b01d6" language="neutral" processorArchitecture="msil" type="win32" />
   <description xmlns="urn:schemas-microsoft-com:asm.v1">ClearMessageOutlookAddIn</description>
   <application />
   <entryPoint>
@@ -93,6 +93,11 @@
   </dependency>
   <dependency>
     <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="System.Configuration.Install" version="4.0.0.0" publicKeyToken="B03F5F7F11D50A3A" language="neutral" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
       <assemblyIdentity name="System.Core" version="4.0.0.0" publicKeyToken="B77A5C561934E089" language="neutral" />
     </dependentAssembly>
   </dependency>
@@ -109,6 +114,11 @@
   <dependency>
     <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
       <assemblyIdentity name="System.Drawing" version="4.0.0.0" publicKeyToken="B03F5F7F11D50A3A" language="neutral" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="System.Management" version="4.0.0.0" publicKeyToken="B03F5F7F11D50A3A" language="neutral" />
     </dependentAssembly>
   </dependency>
   <dependency>
@@ -142,14 +152,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="ClearMessageOutlookAddIn.dll" size="50176">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="ClearMessageOutlookAddIn.dll" size="49664">
       <assemblyIdentity name="ClearMessageOutlookAddIn" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>iPGJ/c8RiA73WEDqu5i31Og7y/73lki9Oi4DqY/fYLo=</dsig:DigestValue>
+        <dsig:DigestValue>MTmtxGJ4ue6PE/eS0qWq4Bkq6HWxyuYKaiSilt84rZA=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -189,6 +199,15 @@
       </hash>
     </dependentAssembly>
   </dependency>
+  <file name="ClearMessageOutlookAddIn.dll.config" size="1107">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>kunwdhwS3xyqJ2EvrxHfMmNbGiYHa1eSw8T3yFcLa70=</dsig:DigestValue>
+    </hash>
+  </file>
   <vstav3:addIn xmlns:vstav3="urn:schemas-microsoft-com:vsta.v3">
     <vstav3:entryPointsCollection>
       <vstav3:entryPoints>
@@ -218,4 +237,4 @@
       </vstov4:customizations>
     </vstav3:application>
   </vstav3:addIn>
-<publisherIdentity name="CN=VE25102018_ANSE\Manoranjan Tiwari" issuerKeyHash="f58cd5afef4858a96ea83a34480d273b5a297e35" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>YZ8YCkHQ8+/3OZRlGA/71VLOTbL0Y9vsom/MafnQ9Us=</DigestValue></Reference></SignedInfo><SignatureValue>XKxRMYjOuXwucQKlZKIKfNnyAt3lJBFlhRvxvpx2+iF6DpDreSAzYDM8HgsJMNywO7LbUcSZfKi4k1QZc7qWhTy+D7A+Ihq8v6XUbojgpKgAZ1Wbkr8G8i+L0btdHbvoWsTeT+V7oWkvyYElB5CDgUqdAduRAbh/fOXihuEM9jE=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>whyC3fyTnnx6oSE3gyPG1ObdSVZfoInr+k9PeFj08njUI2c8XJWVH6+pqY+EizzOQGnaE/FkX0BY1tP+tic0bu7mzmgRLObcqajmQLK7cvBE5UCBWto2NZNuFYRr2xPsRQn+SrxXreXT+TvJg8zNPUhWloSys4e/BYx6bRRZJnE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="4bf5d0f969cc6fa2ecdb63f4b24dce52d5fb0f18659439f7eff3d0410a189f61" Description="" Url=""><as:assemblyIdentity name="ClearMessageOutlookAddIn.dll" version="1.0.0.1" publicKeyToken="3ca411f9c61b01d6" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=VE25102018_ANSE\Manoranjan Tiwari</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>ncbZAuoqFNgIcZx2KmitvsZuzqiT8x06ilxMxFmz5Io=</DigestValue></Reference></SignedInfo><SignatureValue>eo3GDu1q7dOJrb6uDQig7oofCzMr5PssswmIpGaSXG5+Drwdt3UR9Jhd4//syepGYe8J0NbHJPJDpBrBWkZEHsqVWbpWwCSOhY/CphDAAX97mRiri8ru2V0knOQbGZz8UY8g4iFYsnkJehvcl6jIy5HjzJcpGGJLTLsl/3OdFbI=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>whyC3fyTnnx6oSE3gyPG1ObdSVZfoInr+k9PeFj08njUI2c8XJWVH6+pqY+EizzOQGnaE/FkX0BY1tP+tic0bu7mzmgRLObcqajmQLK7cvBE5UCBWto2NZNuFYRr2xPsRQn+SrxXreXT+TvJg8zNPUhWloSys4e/BYx6bRRZJnE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIICHTCCAYagAwIBAgIQVpWXAf5jJbZKkbSuru4TtjANBgkqhkiG9w0BAQsFADBNMUswSQYDVQQDHkIAVgBFADIANQAxADAAMgAwADEAOABfAEEATgBTAEUAXABNAGEAbgBvAHIAYQBuAGoAYQBuACAAVABpAHcAYQByAGkwHhcNMTkwMTIyMDc1MTQ3WhcNMjAwMTIyMTM1MTQ3WjBNMUswSQYDVQQDHkIAVgBFADIANQAxADAAMgAwADEAOABfAEEATgBTAEUAXABNAGEAbgBvAHIAYQBuAGoAYQBuACAAVABpAHcAYQByAGkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMIcgt38k558eqEhN4MjxtTm3UlWX6CJ6/pPT3hY9PJ41CNnPFyVlR+vqamPhIs8zkBp2hPxZF9AWNbT/rYnNG7u5s5oESzm3Kmo5kCyu3LwROVAgVraNjWTbhWEa9sT7EUJ/kq8V63l0/k7yYPMzT1IVpaEsrOHvwWMem0UWSZxAgMBAAEwDQYJKoZIhvcNAQELBQADgYEAFlXOMHvAhOGK+nQgHGoVFDgLsftHIjduKu4Hnw9/5WPkzNUI1CnAtOT/8EcJHNNCA8LsmxGKsXu/8rRceKy848zdQfEJfGxxh9BIBEd6qf/xn9LPUfCS6x04pMDWhRUAX58k8jaA5GUPevsu4Zj9+ln5yB7epCTodzrEV+2NK4E=</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>
+<publisherIdentity name="CN=VE25102018_ANSE\Manoranjan Tiwari" issuerKeyHash="f58cd5afef4858a96ea83a34480d273b5a297e35" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>1h8nl6QZ7HwFqYUoqIvesJ0qvpUPSUAi14pLn0KKI/k=</DigestValue></Reference></SignedInfo><SignatureValue>SQYFdEo6307SORqv2FQ1pLq8NNNkSjiH59cQcDa2oDaf7r1pTHxnCpcBOm7ae7qT56hxWnQprPz+1bnum0nyS6ALHTJ9S5SyxiutJV2s9VGnP9twIXx2McVp961nwV+MKL2YOt8pXl1zGpTKtW/NV275n1nUnXQ8cSwVzR4dYfE=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>whyC3fyTnnx6oSE3gyPG1ObdSVZfoInr+k9PeFj08njUI2c8XJWVH6+pqY+EizzOQGnaE/FkX0BY1tP+tic0bu7mzmgRLObcqajmQLK7cvBE5UCBWto2NZNuFYRr2xPsRQn+SrxXreXT+TvJg8zNPUhWloSys4e/BYx6bRRZJnE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="f9238a429f4b8ad72240490f95be2a9db0de8ba82885a9057cec19a497271fd6" Description="" Url=""><as:assemblyIdentity name="ClearMessageOutlookAddIn.dll" version="1.0.0.3" publicKeyToken="3ca411f9c61b01d6" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=VE25102018_ANSE\Manoranjan Tiwari</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>Px8ltQHOB+SuA4bI/8x3OSmZhA49JNhJJ1wY+YvVahk=</DigestValue></Reference></SignedInfo><SignatureValue>jD1o/eDRhV3bzkgg3hFgBjZVxEml0eJp/55wiTGTMoLC6tBshS90MutqW+y8LlE83ItZZp/EuCMvuiRDQsSYjQi6iC5w5FOnmLTz57qVfBQ2e2NdtWhesoZWqCHb1xQGeQHDT3e2n5593HnTPdclQxYBP0v6AcBLQK9fFAwVEP8=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>whyC3fyTnnx6oSE3gyPG1ObdSVZfoInr+k9PeFj08njUI2c8XJWVH6+pqY+EizzOQGnaE/FkX0BY1tP+tic0bu7mzmgRLObcqajmQLK7cvBE5UCBWto2NZNuFYRr2xPsRQn+SrxXreXT+TvJg8zNPUhWloSys4e/BYx6bRRZJnE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIICHTCCAYagAwIBAgIQVpWXAf5jJbZKkbSuru4TtjANBgkqhkiG9w0BAQsFADBNMUswSQYDVQQDHkIAVgBFADIANQAxADAAMgAwADEAOABfAEEATgBTAEUAXABNAGEAbgBvAHIAYQBuAGoAYQBuACAAVABpAHcAYQByAGkwHhcNMTkwMTIyMDc1MTQ3WhcNMjAwMTIyMTM1MTQ3WjBNMUswSQYDVQQDHkIAVgBFADIANQAxADAAMgAwADEAOABfAEEATgBTAEUAXABNAGEAbgBvAHIAYQBuAGoAYQBuACAAVABpAHcAYQByAGkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMIcgt38k558eqEhN4MjxtTm3UlWX6CJ6/pPT3hY9PJ41CNnPFyVlR+vqamPhIs8zkBp2hPxZF9AWNbT/rYnNG7u5s5oESzm3Kmo5kCyu3LwROVAgVraNjWTbhWEa9sT7EUJ/kq8V63l0/k7yYPMzT1IVpaEsrOHvwWMem0UWSZxAgMBAAEwDQYJKoZIhvcNAQELBQADgYEAFlXOMHvAhOGK+nQgHGoVFDgLsftHIjduKu4Hnw9/5WPkzNUI1CnAtOT/8EcJHNNCA8LsmxGKsXu/8rRceKy848zdQfEJfGxxh9BIBEd6qf/xn9LPUfCS6x04pMDWhRUAX58k8jaA5GUPevsu4Zj9+ln5yB7epCTodzrEV+2NK4E=</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>

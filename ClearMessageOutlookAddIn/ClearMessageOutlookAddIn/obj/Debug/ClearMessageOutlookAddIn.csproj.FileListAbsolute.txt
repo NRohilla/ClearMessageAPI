@@ -31,4 +31,6 @@ E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj
 E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csproj.CopyComplete
 E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.dll
 E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.pdb
+E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\ClearMessageOutlookAddIn.dll.config
+E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\bin\Debug\settings.json
 E:\Clients\TimButterwWorth\ClearMessageOutlookAddIn\ClearMessageOutlookAddIn\obj\Debug\ClearMessageOutlookAddIn.csprojAssemblyReference.cache

@@ -15,6 +15,7 @@ using System.Net;
 using System.Windows.Forms;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Resources;
 
 namespace ClearMessageOutlookAddIn
 {
@@ -59,6 +60,10 @@ namespace ClearMessageOutlookAddIn
             olMailItem = Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
 
             //((Outlook.ItemEvents_10_Event)olMailItem).Send += ThisAddIn_Send; ;
+
+            //IResourceWriter resourceWriter =new ResourceWriter("Resources.resources");
+            //ClearMessageOutlookAddIn.Properties.Resources.ResourceManager.GetString("ResxKey", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+
         }
 
         //private void ThisAddIn_Send(ref bool Cancel)

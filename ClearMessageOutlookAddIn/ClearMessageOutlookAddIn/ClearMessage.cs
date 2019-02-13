@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -61,6 +62,8 @@ namespace ClearMessageOutlookAddIn
                     contactItem.Subject = contactItem.LastNameAndFirstName;
                     contactItem.Save();
                 }
+
+                Marshal.FinalReleaseComObject(contactItem);
             }
         }
 
@@ -128,6 +131,8 @@ namespace ClearMessageOutlookAddIn
                     }
 
                     contactItem.Save();
+
+                    Marshal.FinalReleaseComObject(contactItem);
                 }
             }
             catch (Exception ex)
