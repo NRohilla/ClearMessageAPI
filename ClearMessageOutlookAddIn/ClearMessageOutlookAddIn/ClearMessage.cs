@@ -41,10 +41,16 @@ namespace ClearMessageOutlookAddIn
         private void ClearMessage_FormRegionShowing(object sender, System.EventArgs e)
         {
             dynamic outlookObject = (dynamic)this.OutlookItem;
+            if (outlookObject.MessageClass == "IPM.Note")
+            {
+                chkSendViaClearMessage.Visible = false;
+            }
+
 
             //Check the object is of type Contact
             if (outlookObject.MessageClass == "IPM.Contact")
             {
+                chkSendViaClearMessage.Visible = true;
                 Outlook.ContactItem contactItem = (Outlook.ContactItem)this.OutlookItem;
 
                 //Getting the custom property defined for the checkbox
