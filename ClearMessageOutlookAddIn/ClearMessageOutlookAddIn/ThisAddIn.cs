@@ -234,8 +234,6 @@ namespace ClearMessageOutlookAddIn
                 sentEmailEntryID = olMailItem.EntryID;
 
                 olMailItem.Send();
-
-
             }
         }
 
