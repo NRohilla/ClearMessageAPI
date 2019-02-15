@@ -46,12 +46,12 @@ namespace ClearMessageOutlookAddIn
                 //Getting the location of the directory where the plugin files will get installed
                 string filePath = Path.GetDirectoryName(Context.Parameters["AssemblyPath"]);
 
-                MessageBox.Show(filePath);
+                //MessageBox.Show(filePath);
 
                 //Getting the settings.json file to update with bearer and endpoints
                 string jsonSettingsPath = filePath + "\\settings.json";
 
-                MessageBox.Show(jsonSettingsPath);
+                //MessageBox.Show(jsonSettingsPath);
 
                 SettingsModel settingsModel = new SettingsModel();
 
@@ -62,15 +62,15 @@ namespace ClearMessageOutlookAddIn
                     json = sr.ReadToEnd();
                 }
 
-                MessageBox.Show(json);
+                //MessageBox.Show(json);
 
                 //Deserialzed the settings.json file to the SettingsModel object 
                 settingsModel = JsonConvert.DeserializeObject<SettingsModel>(json);
 
                 //MessageBox.Show(settings.ToString());
-                MessageBox.Show(Context.Parameters["bearerKey"]);
-                MessageBox.Show(Context.Parameters["apiBaseUrl"]);
-                MessageBox.Show(Context.Parameters["targetdir"]);
+                //MessageBox.Show(Context.Parameters["bearerKey"]);
+                //MessageBox.Show(Context.Parameters["apiBaseUrl"]);
+                //MessageBox.Show(Context.Parameters["targetdir"]);
 
                 //If settingsModel is not null then we will update the bearer token and endpoints
                 if (settingsModel != null)
@@ -83,7 +83,7 @@ namespace ClearMessageOutlookAddIn
 
                 //Finally write and replace all the text in the settings.json file.
                 File.WriteAllText(jsonSettingsPath, JsonConvert.SerializeObject(settingsModel));
-                MessageBox.Show("Done: " + jsonSettingsPath);
+                //MessageBox.Show("Done: " + jsonSettingsPath);
             }
             catch (Exception e)
             {
