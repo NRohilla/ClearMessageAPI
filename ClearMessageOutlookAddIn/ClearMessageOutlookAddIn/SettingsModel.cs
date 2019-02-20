@@ -22,5 +22,6 @@ namespace ClearMessageOutlookAddIn
                 return Path.GetDirectoryName(path);
             }
         }
+        public string AuditSetting { get; set; }
     }
 }

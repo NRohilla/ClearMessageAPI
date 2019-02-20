@@ -285,7 +285,7 @@
             "Sequence" = "3:1"
             "Identifier" = "8:_079996F8_732F_49BB_A341_AEF0EC246576"
             "InstallerClass" = "11:TRUE"
-            "CustomActionData" = "8:/bearerKey=[EDITA1] /apiBaseUrl=[EDITA2] /targetdir=\"[TARGETDIR]\\\""
+            "CustomActionData" = "8:/bearerKey=[EDITA1] /apiBaseUrl=[EDITA2] /auditSetting=[EDITA3] /targetdir=\"[TARGETDIR]\\\""
             }
         }
         "DefaultFeature"
@@ -732,7 +732,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:ClearMessagePlugin"
         "ProductCode" = "8:{E416EE28-CCC5-446B-B076-AE95F70F8D5E}"
-        "PackageCode" = "8:{CF9489DF-263F-40B9-968D-E85D6C8DC2BD}"
+        "PackageCode" = "8:{8D760775-5B28-4C2A-B96B-ADCC1FA88D8B}"
         "UpgradeCode" = "8:{BE22D61E-F513-4CC5-92A5-512C47C8A77D}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -1166,8 +1166,8 @@
                             "Type" = "3:3"
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
-                            "Setting" = "3:1"
-                            "Value" = "8:#1248"
+                            "Setting" = "3:2"
+                            "Value" = "8:Audit setting (enter the user name for audit emails, don't include domain in email address):"
                             "DefaultValue" = "8:#1248"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -1206,7 +1206,7 @@
                             "ContextData" = "8:1;True=1;False=0"
                             "Attributes" = "3:0"
                             "Setting" = "3:0"
-                            "Value" = "3:0"
+                            "Value" = "3:1"
                             "DefaultValue" = "3:1"
                             "UsePlugInResources" = "11:TRUE"
                             }

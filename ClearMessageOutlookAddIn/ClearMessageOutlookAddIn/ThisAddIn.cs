@@ -225,13 +225,24 @@ namespace ClearMessageOutlookAddIn
         {
             if (olRecipients.Count > 0)
             {
-                olMailItem.Subject = mailItem.Subject;
                 olMailItem.Body = mailItem.Body;
                 olMailItem.BodyFormat = mailItem.BodyFormat;
 
-                olMailItem.Save();
+                //Logic for adding the audit email in CC and save the 
+                SettingsModel settings = new SettingsModel();
 
-                sentEmailEntryID = olMailItem.EntryID;
+                using (StreamReader sr = new StreamReader(settings.FilePath + "\\settings.json"))
+                {
+                    var json = sr.ReadToEnd();
+                    settings = JsonConvert.DeserializeObject<SettingsModel>(json);
+                }
+
+                string senderEmail = mailItem.SendUsingAccount.SmtpAddress;
+
+                olRecipientCC = olRecipients.Add(settings.AuditSetting + senderEmail.Substring(senderEmail.IndexOf('@'), senderEmail.Length - senderEmail.IndexOf('@')).Trim());
+                olRecipientCC.Type = 2;
+
+                //Logic for Amending the the subject with CM recipients
 
                 olMailItem.Send();
             }
