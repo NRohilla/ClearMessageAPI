@@ -27,7 +27,6 @@ namespace ClearMessageOutlookAddIn
         Outlook.MailItem olMailItem = null;
         Outlook.Recipients olRecipients = null;
         Outlook.Recipient olRecipientTO = null;
-        Outlook.Recipient cmRecipientTO = null;
         Outlook.Recipient olRecipientCC = null;
         Outlook.Recipient olRecipientBCC = null;
         Outlook.Attachments olAttachments = null;
@@ -35,10 +34,10 @@ namespace ClearMessageOutlookAddIn
         ClearMailModel clearMailModel;
         Personalizations personalizations;
         Attachments attachments;
+
         List<Attachments> attachmentList = new List<Attachments>();
         List<TempAttachments> tempAttachmentList = new List<TempAttachments>();
         List<string> cmRecipientsList = new List<string>();
-        string sentEmailEntryID = string.Empty;
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -58,117 +57,83 @@ namespace ClearMessageOutlookAddIn
 
             //Initializing the outlook email object
             olMailItem = Application.CreateItem(Outlook.OlItemType.olMailItem) as Outlook.MailItem;
-
-            //((Outlook.ItemEvents_10_Event)olMailItem).Send += ThisAddIn_Send; ;
-
-            //IResourceWriter resourceWriter =new ResourceWriter("Resources.resources");
-            //ClearMessageOutlookAddIn.Properties.Resources.ResourceManager.GetString("ResxKey", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
-
         }
-
-        //private void ThisAddIn_Send(ref bool Cancel)
-        //{
-        //    if (olMailItem.Sent)
-        //    {
-
-        //    }
-        //}
 
         public void Inspectors_NewInspector(Microsoft.Office.Interop.Outlook.Inspector Inspector)
         {
             try
             {
                 Outlook.MailItem mailItem = Inspector.CurrentItem as Outlook.MailItem;
-                //if (mailItem != null)
-                //{
-                //    if (mailItem.EntryID == null)
-                //    {
-                //        mailItem.Subject = DateTime.Now.ToString();
-                //        mailItem.Body = "This mail was sent using ClearMessage API";
-                //    }
-                //}
+
+                //InitializeComObjects();
+
+                //Calling the event before Attachment is fully added to the mail item
+                mailItem.BeforeAttachmentAdd += MailItem_BeforeAttachmentAdd;
+
+                //Calling the event when attachment is removed
+                mailItem.AttachmentRemove += MailItem_AttachmentRemove;
+
+                //Calling the event not to save the email as draft after sent
+                //mailItem.Write += MailItem_Write;
 
                 //Initializing the olRecipients which is not marked as Clear Message recipients
                 olRecipients = olMailItem.Recipients;
 
                 //Initializing the outlook email attachments object
                 olAttachments = olMailItem.Attachments;
-
-                //Calling the event before Attachment is fully added to the mail item
-                mailItem.BeforeAttachmentAdd += MailItem_BeforeAttachmentAdd;
-
-                //Calling the event when attachment is remnoved
-                mailItem.AttachmentRemove += MailItem_AttachmentRemove;
-
-                bool CancelSend = false;
-                if (!string.IsNullOrWhiteSpace(mailItem.EntryID))
-                {
-                    Application_ItemSend(mailItem, ref CancelSend);
-                }
             }
             catch (Exception e)
             {
-                //MessageBox.Show(e.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ResetMailObjects();
+                //ReleaseComObjects();
             }
         }
 
         private void Application_ItemSend(object Item, ref bool Cancel)
         {
-            if (Item is Outlook.MailItem)
+            try
             {
-                Outlook.MailItem mail = (Outlook.MailItem)Item;
+                if (Item is Outlook.MailItem)
+                {
+                    Outlook.MailItem mail = (Outlook.MailItem)Item;
 
-                //Send the ClearMessage api email message which are marked with ClearMessage checked
-                CreateClearMessageMailItem(mail);
+                    /*Initializing the clear message email model objects*/
+                    InitializeMailObjects();
 
-                //Send the outlook normal email message which are not marked with ClearMessage
-                SendOutlookEmails(mail);
+                    ////Calling method for initializing COM objects
+                    ////if (olMailItem == null)
+                    //InitializeComObjects();
 
-                //Canceling the ItemSend event of outlook and overiding by our own method 
-                Cancel = true;
+                    //Send the ClearMessage api email message which are marked with ClearMessage checked
+                    CreateClearMessageMailItem(mail);
 
-                //Releasing the mail object from the memory
-                if (mail != null)
-                    Marshal.FinalReleaseComObject(mail);
+                    //Send the outlook normal email message which are not marked with ClearMessage
+                    SendOutlookEmails(mail);
 
-                //Closing the new mail window and discarding the composed message.
-                this.Application.ActiveInspector().Close(Outlook.OlInspectorClose.olDiscard);
+                    //Canceling the ItemSend event of outlook and overiding by our own method 
+                    Cancel = true;
 
-                /*===============================================================================*/
-                //Outlook.Items sentEmailItems = null;
-                //Outlook.Items sentEmailItems = (Outlook.Items)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderSentMail).Items;
-                //Outlook.Folder sentFolder = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderSentMail);
+                    //Releasing the mail object from the memory
+                    if (mail != null)
+                        Marshal.FinalReleaseComObject(mail);
 
-                //Outlook.NameSpace ns = Application.GetNamespace("MAPI");
+                    mail = null;
+                    //Closing the new mail window and discarding the composed message.
+                    if (this.Application.ActiveInspector() != null)
+                    {
+                        this.Application.ActiveInspector().Close(Outlook.OlInspectorClose.olDiscard);
+                    }
 
-                //Outlook.MailItem objMail = ns.GetItemFromID(sentEmailEntryID, sentFolder.StoreID);
+                    ResetMailObjects();
+                    ReleaseComObjects();
+                    Dispose();
+                }
 
-                ////sentEmailItems = sentEmailsList.Items;
-
-                //sentEmailItems.Sort("[SentOn]", true);
-
-                //dynamic obj = sentEmailItems.Find(sentEmailEntryID);
-
-                //foreach (dynamic emailItem in sentEmailItems)
-                //{
-                //    if (olMailItem.EntryID != null)
-                //    {
-
-                //    }
-                //}
-
-                //if (cmRecipientsList.Any())
-                //{
-                //    foreach (string cmEmail in cmRecipientsList)
-                //    {
-                //        cmRecipientTO = olRecipients.Add(cmEmail);
-                //        cmRecipientTO.Type = 1;
-                //    }
-                //}
-                /*===============================================================================*/
-
-                Dispose();
-                ResetObjects();
+            }
+            catch (Exception ex)
+            {
+                ResetMailObjects();
+                //ReleaseComObjects();
             }
         }
 
@@ -176,9 +141,6 @@ namespace ClearMessageOutlookAddIn
         {
             if (mailObject is Outlook.MailItem)
             {
-                /*Initializing the clear message email model objects*/
-                InitializeMailObjects();
-
                 Outlook.MailItem mail = (Outlook.MailItem)mailObject;
                 Outlook.Folder contacts = (Outlook.Folder)Application.ActiveExplorer().Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderContacts);
 
@@ -219,33 +181,6 @@ namespace ClearMessageOutlookAddIn
                 #endregion
             }
 
-        }
-
-        private void SendOutlookEmails(Outlook.MailItem mailItem)
-        {
-            if (olRecipients.Count > 0)
-            {
-                olMailItem.Body = mailItem.Body;
-                olMailItem.BodyFormat = mailItem.BodyFormat;
-
-                //Logic for adding the audit email in CC and save the 
-                SettingsModel settings = new SettingsModel();
-
-                using (StreamReader sr = new StreamReader(settings.FilePath + "\\settings.json"))
-                {
-                    var json = sr.ReadToEnd();
-                    settings = JsonConvert.DeserializeObject<SettingsModel>(json);
-                }
-
-                string senderEmail = mailItem.SendUsingAccount.SmtpAddress;
-
-                olRecipientCC = olRecipients.Add(settings.AuditSetting + senderEmail.Substring(senderEmail.IndexOf('@'), senderEmail.Length - senderEmail.IndexOf('@')).Trim());
-                olRecipientCC.Type = 2;
-
-                //Logic for Amending the the subject with CM recipients
-
-                olMailItem.Send();
-            }
         }
 
         private async Task CheckRecipientsInContactsAsync(string emailAddress, Outlook.Folder contacts, Outlook.MailItem mail)
@@ -303,32 +238,46 @@ namespace ClearMessageOutlookAddIn
             }
         }
 
+        private void PerpareClearMessageModel(string emailAddress, Outlook.MailItem mail)
+        {
+            //Setting the personalization class object
+            personalizations.to.Add(new To() { email = emailAddress });
+
+            if (string.IsNullOrWhiteSpace(personalizations.subject))
+                personalizations.subject = mail.Subject;
+
+            //Adding the personalization object to the list of Persaonalizations
+            if (!clearMailModel.personalizations.Any())
+                clearMailModel.personalizations.Add(personalizations);
+
+            //Adding the list of Content class object
+            clearMailModel.content.Add(new Content() { type = "text/plain", value = mail.Body });
+
+            //Assigning the list of Attachents to the ClearMailModel.Attachment object
+            if (attachmentList.Any())
+                if (!clearMailModel.attachments.Any())
+                    clearMailModel.attachments = attachmentList;
+
+            // The propetry set for the FROM email address
+            if (string.IsNullOrWhiteSpace(clearMailModel.from.email))
+            {
+                clearMailModel.from.email = mail.SendUsingAccount != null ? mail.SendUsingAccount.SmtpAddress : GetSenderEmailAddress(); // GetSenderEmailAddress(mail, mail.SendUsingAccount.DisplayName);
+            }
+        }
+
+        private string GetSenderEmailAddress()
+        {
+            Outlook.Recipient sender = Application.Session.CurrentUser;
+            dynamic senderSmtpAddress = sender.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x39FE001E");
+
+            return senderSmtpAddress.Trim();
+        }
+
         private string GetSmtpEmaillAddress(Outlook.ContactItem contactItem)
         {
             dynamic contactProp = contactItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/id/{00062004-0000-0000-C000-000000000046}/8084001F");
 
             return contactProp.ToString().Trim();
-        }
-
-        private void PerpareClearMessageModel(string emailAddress, Outlook.MailItem mail)
-        {
-            //Setting the personalization class object
-            personalizations.to.Add(new To() { email = emailAddress });
-            personalizations.subject = mail.Subject;
-
-            //Adding the personalization object to the list of Persaonalizations
-            clearMailModel.personalizations.Add(personalizations);
-
-            //Adding the list of Content class object 
-            clearMailModel.content.Add(new Content() { type = "text/plain", value = mail.Body });
-
-            //Assigning the list of Attachents to the ClearMailModel.Attachment object
-            if (!clearMailModel.attachments.Any())
-                clearMailModel.attachments = attachmentList;
-
-            // The propetry set for the FROM email address
-            if (string.IsNullOrWhiteSpace(clearMailModel.from.email))
-                clearMailModel.from.email = mail.SendUsingAccount.SmtpAddress;
         }
 
         private async Task SendClearMessageEmailAsync()
@@ -348,21 +297,62 @@ namespace ClearMessageOutlookAddIn
             }
             catch (Exception ex)
             {
-
+                ResetMailObjects();
+                //ReleaseComObjects();
             }
         }
 
-        private void InitializeMailObjects()
+        private void SendOutlookEmails(Outlook.MailItem mailItem)
         {
-            clearMailModel = new ClearMailModel();
-            clearMailModel.personalizations = new List<Personalizations>();
-            clearMailModel.from = new From();
-            clearMailModel.content = new List<Content>();
-            clearMailModel.attachments = new List<Attachments>();
+            if (olRecipients.Count > 0)
+            {
+                olMailItem.Body = mailItem.Body;
+                olMailItem.BodyFormat = mailItem.BodyFormat;
 
-            personalizations = new Personalizations();
-            personalizations.to = new List<To>();
-            attachments = new Attachments();
+                //Logic for adding the audit email in CC and save the 
+                SettingsModel settings = new SettingsModel();
+
+                using (StreamReader sr = new StreamReader(settings.FilePath + "\\settings.json"))
+                {
+                    var json = sr.ReadToEnd();
+                    settings = JsonConvert.DeserializeObject<SettingsModel>(json);
+                }
+
+                string senderEmail = mailItem.SendUsingAccount != null ? mailItem.SendUsingAccount.SmtpAddress : GetSenderEmailAddress(); //GetSenderEmailAddress(mailItem, mailItem.SendUsingAccount.DisplayName);
+
+                //Adding the audit email address in the CC list appending the domain of the outlook user
+                olRecipientCC = olRecipients.Add(settings.AuditSetting + senderEmail.Substring(senderEmail.IndexOf('@'), senderEmail.Length - senderEmail.IndexOf('@')).Trim());
+                olRecipientCC.Type = 2;
+
+                //Logic for Amending the the subject with CM recipients
+                bool firstLoop = true;
+                if (cmRecipientsList.Any())
+                {
+                    foreach (string cmRecipients in cmRecipientsList)
+                    {
+                        if (firstLoop)
+                        {
+                            olMailItem.Subject = mailItem.Subject + " - " + cmRecipients;
+                            firstLoop = false;
+                        }
+                        else
+                        {
+                            olMailItem.Subject = olMailItem.Subject + ";" + cmRecipients;
+                        }
+                    }
+                }
+                else
+                {
+                    olMailItem.Subject = mailItem.Subject;
+                }
+
+                //foreach (Outlook.Attachment attachment in mailItem.Attachments)
+                //{
+                //    olAttachments = olMailItem.Attachments.Add(attachment, attachment.Type, 1, attachment.DisplayName);
+                //}
+                olMailItem.Save();
+                olMailItem.Send();
+            }
         }
 
         private void MailItem_BeforeAttachmentAdd(Outlook.Attachment Attachment, ref bool Cancel)
@@ -508,16 +498,42 @@ namespace ClearMessageOutlookAddIn
             }
         }
 
-        private void ResetObjects()
+        private void MailItem_Write(ref bool Cancel)
         {
-            attachmentList.Clear();
-            tempAttachmentList.Clear();
+            Cancel = true;
+        }
 
-            clearMailModel.personalizations.Clear();
-            clearMailModel.attachments.Clear();
-            clearMailModel.content.Clear();
-            cmRecipientsList.Clear();
+        private void InitializeMailObjects()
+        {
+            clearMailModel = new ClearMailModel();
+            clearMailModel.personalizations = new List<Personalizations>();
+            clearMailModel.from = new From();
+            clearMailModel.content = new List<Content>();
+            clearMailModel.attachments = new List<Attachments>();
 
+            personalizations = new Personalizations();
+            personalizations.to = new List<To>();
+            attachments = new Attachments();
+        }
+
+        private void ResetMailObjects()
+        {
+            clearMailModel = null;
+            personalizations = null;
+            attachments = null;
+
+            if (attachmentList.Any())
+                attachmentList.Clear();
+
+            if (tempAttachmentList.Any())
+                tempAttachmentList.Clear();
+
+            if (cmRecipientsList.Any())
+                cmRecipientsList.Clear();
+        }
+
+        private void ReleaseComObjects()
+        {
             //Releasing all the com objects to avoid error for the next email
             if (olMailItem != null)
                 Marshal.FinalReleaseComObject(olMailItem);
